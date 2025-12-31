@@ -18,17 +18,42 @@ export const useRequests = () => {
   const user = AuthStore.getLoggedUser();
   const isAdmin = AuthStore.isAdmin();
 
+  // Stato del filtro: 'none' = nessun filtro selezionato (non mostrare niente),
+  // 'sent' = richieste inviate, 'received' = richieste ricevute
+  const [filterMode, setFilterMode] = useState<'none'|'sent' | 'received'>('none');
+
   // 3. FUNZIONE DI CARICAMENTO (Il cuore dell'hook)
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      // Se non è selezionato alcun filtro => non mostriamo richieste
+      if (filterMode === 'none') {
+        setRequests([]);
+        setLoading(false);
+        return;
+      }
+
       // LOGICA BUSINESS:
-      // Se sono Admin -> Voglio vedere TUTTE le richieste (passo undefined)
-      // Se sono User  -> Voglio vedere solo le MIE (passo il mio ID)
-      const userIdToFilter = isAdmin ? undefined : user.id;
-      
-      const data = await repository.getRequests(userIdToFilter);
+      // - Se sono NON-admin -> vedo solo le mie richieste (l'unico filtro valido è 'sent')
+      // - Se sono admin:
+      //    * 'sent' => vedi le richieste inviate dall'admin (user.id)
+      //    * 'received' => vedi le richieste degli altri (undefined ma poi filtrate)
+      let userIdToFilter: string | undefined;
+      if (!isAdmin) {
+        // Non-admin può solo vedere le proprie richieste: forziamo 'sent'
+        userIdToFilter = user.id;
+      } else {
+        userIdToFilter = filterMode === 'sent' ? user.id : undefined;
+      }
+
+      let data = await repository.getRequests(userIdToFilter);
+
+      // Se admin e vuole vedere 'received', escludo le sue stesse richieste
+      if (isAdmin && filterMode === 'received') {
+        data = data.filter(r => r.userId !== user.id);
+      }
+
       setRequests(data);
     } catch (err) {
       console.error("Errore durante il caricamento richieste:", err);
@@ -36,10 +61,14 @@ export const useRequests = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, user.id]);
+  }, [isAdmin, user.id, filterMode]);
 
   // 4. AZIONI ADMIN: Approva
   const approveRequest = async (requestId: string) => {
+    if (!isAdmin) {
+      alert("Non sei autorizzato a eseguire questa azione.");
+      return;
+    }
     try {
       setLoading(true); // Mostriamo il caricamento mentre salva
       await repository.updateRequestStatus(requestId, RequestStatus.APPROVED);
@@ -53,6 +82,10 @@ export const useRequests = () => {
 
   // 5. AZIONI ADMIN: Rifiuta
   const rejectRequest = async (requestId: string) => {
+    if (!isAdmin) {
+      alert("Non sei autorizzato a eseguire questa azione.");
+      return;
+    }
     try {
       setLoading(true);
       await repository.updateRequestStatus(requestId, RequestStatus.REJECTED);
@@ -75,6 +108,8 @@ export const useRequests = () => {
     loading,         // Sta caricando?
     error,           // Ci sono errori?
     isAdmin,         // Sono admin?
+    filterMode,      // 'sent' | 'received'
+    setFilterMode,   // cambia il filtro e ricarica automaticamente
     refresh: loadData, // Funzione per forzare l'aggiornamento (pull-to-refresh)
     approveRequest,  // Funzione approva
     rejectRequest    // Funzione rifiuta

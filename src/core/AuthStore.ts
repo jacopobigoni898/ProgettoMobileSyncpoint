@@ -6,7 +6,7 @@ const CURRENT_USER: User = {
   name: 'Mario ',
   surname: 'Rossi',
   email: 'mario@synncpoint.it',
-  role: UserRole.ADMIN, // <--- Cambia in UserRole.EMPLOYEE per vedere la differenza
+  role: UserRole.EMPLOYEE, // <--- Cambia in UserRole.EMPLOYEE per vedere la differenza
 };
 
 export const AuthStore = {

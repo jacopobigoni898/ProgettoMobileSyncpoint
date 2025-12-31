@@ -4,15 +4,17 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // 2. Importiamo il gradiente
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useRequests } from '../hooks/UseRequests';
 import { RequestCard } from '../components/RequestCard';
 import { Request } from '../../domain/entities/Request';
 import { RequestStatus, RequestType } from '../../domain/entities/RequestsType';
+import { AuthStore } from '../../core/AuthStore';
 
 export default function RequestsScreen() {
   
-  const { requests, loading, isAdmin, refresh, approveRequest, rejectRequest } = useRequests();
+  const { requests, loading, isAdmin, refresh, approveRequest, rejectRequest, filterMode, setFilterMode } = useRequests();
   // 3. Hook per ottenere l'altezza della status bar (tacca)
   const insets = useSafeAreaInsets();
 
@@ -36,6 +38,13 @@ export default function RequestsScreen() {
       ? getDuration(item.startDate, item.endDate) 
       : undefined;
 
+    const currentUser = AuthStore.getLoggedUser();
+
+    // Definiamo per ogni richiesta se è 'inviata' (item.userId === mio id)
+    // o 'ricevuta' (se io sono admin e item.userId !== mio id)
+    const isSent = item.userId === currentUser.id;
+    const isReceived = isAdmin && item.userId !== currentUser.id;
+
     return (
       <RequestCard
         type={item.type}
@@ -44,6 +53,8 @@ export default function RequestsScreen() {
         durationString={duration}
         isAdmin={isAdmin}
         requesterName={item.requesterName}
+        // Mostra le azioni solo quando la richiesta è 'ricevuta' dall'admin
+        showActions={isReceived && filterMode === 'received'}
         onApprove={() => approveRequest(item.id)}
         onReject={() => rejectRequest(item.id)}
       />
@@ -70,22 +81,55 @@ export default function RequestsScreen() {
         </View>
       </LinearGradient>
 
-      {/* CONTENUTO */}
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#007AFF" />
+      {/* BODY: contenitore flessibile che contiene filtri + area contenuti */}
+      <View style={styles.bodyContainer}>
+        {/* FILTRI: due pulsanti in stile pill (come da mock) */}
+        <View style={styles.filterContainer}>
+          <TouchableOpacity
+            style={[styles.filterBtn, filterMode === 'sent' && styles.filterActive]}
+            onPress={() => setFilterMode(filterMode === 'sent' ? 'none' : 'sent')}
+          >
+            <Text style={styles.filterText}>Richieste Inviate</Text>
+            <Ionicons name="chevron-down" size={18} color="#000" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.filterBtn,
+              filterMode === 'received' && styles.filterActive,
+              !isAdmin && styles.filterDisabled
+            ]}
+            onPress={() => isAdmin ? setFilterMode(filterMode === 'received' ? 'none' : 'received') : undefined}
+            disabled={!isAdmin}
+          >
+            <Text style={styles.filterText}>Richieste ricevute</Text>
+            <Ionicons name="chevron-down" size={18} color="#000" />
+          </TouchableOpacity>
         </View>
-      ) : (
-        <FlatList
-          data={requests}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>Nessuna richiesta trovata.</Text>
-          }
-        />
-      )}
+
+        {/* CONTENUTO: qui la lista prende tutto lo spazio rimanente */}
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#007AFF" />
+          </View>
+        ) : (
+          filterMode === 'none' ? (
+            // Nessun filtro selezionato: mostriamo spazio vuoto (come da mock)
+            <View style={styles.emptyPlaceholder} />
+          ) : (
+            <FlatList
+              style={{ flex: 1 }}
+              data={requests}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>Nessuna richiesta trovata.</Text>
+              }
+            />
+          )
+        )}
+      </View>
     </View>
   );
 }
@@ -97,8 +141,9 @@ const styles = StyleSheet.create({
   },
   // --- STILI AGGIORNATI PER HEADER ---
   gradientHeader: {
-    flex:0.5,
-    paddingBottom: 15,          // Spazio sotto il titolo
+    marginBottom: 40,
+    paddingBottom: 18,          // Spazio sotto il titolo
+    minHeight: 120,
     borderBottomLeftRadius: 20, // (Opzionale) Arrotonda il fondo del gradiente
     borderBottomRightRadius: 20,
     elevation: 4,               // Leggera ombra su Android
@@ -118,16 +163,55 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000', // Nero pieno per contrasto
   },
+  filterContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 0,
+    marginTop: -20,
+  },
+  filterBtn: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 16,
+    width: '100%'
+  },
+  filterText: {
+    fontSize: 16,
+    color: '#000',
+  },
+  filterActive: {
+    borderWidth: 1,
+    borderColor: '#F59F28',
+  },
+  filterDisabled: {
+    opacity: 0.6,
+  },
   // -----------------------------------
-  listContent: {
+  bodyContainer: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 20, // Spazio tra il gradiente e la prima card
+    paddingTop: 10,
+  },
+  listContent: {
+    paddingTop: 10, // Spazio tra il gradiente e la prima card
     paddingBottom: 40,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyPlaceholder: {
+    flex: 1,
   },
   emptyText: {
     textAlign: 'center',

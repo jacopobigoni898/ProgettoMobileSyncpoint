@@ -12,6 +12,8 @@ interface RequestCardProps {
   onApprove?: () => void;        // Funzione da eseguire all'approvazione
   onReject?: () => void;         // Funzione da eseguire al rifiuto
   requesterName?: string;        // Nome della persona che ha inviato la richiesta
+  // Se true, mostra i pulsanti di azione (approva/rifiuta). Usato per distinguere 'sent' vs 'received'.
+  showActions?: boolean;
 }
 
 export const RequestCard = ({ 
@@ -23,6 +25,7 @@ export const RequestCard = ({
   onApprove, 
   onReject, 
   requesterName,
+  showActions = false,
 }: RequestCardProps) => {
 
   // ... (Tieni le funzioni getTypeColor e getBadgeStyle come prima) ...
@@ -81,7 +84,7 @@ export const RequestCard = ({
       </View>
 
       {/* CAMBIAMENTO 3: Sezione Admin inserita qui sotto */}
-      {isAdmin && status === RequestStatus.PENDING && (
+      {showActions && status === RequestStatus.PENDING && (
         <View style={styles.adminActionContainer}>
           <TouchableOpacity 
             style={[styles.actionBtn, styles.rejectBtn]} 
