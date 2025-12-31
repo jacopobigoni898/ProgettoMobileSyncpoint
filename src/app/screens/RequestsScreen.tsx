@@ -1,27 +1,28 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'; // Per gestire il notch dell'iPhone
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+// 1. Rimuoviamo SafeAreaView e importiamo useSafeAreaInsets per gestire il padding manualmente
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// 2. Importiamo il gradiente
+import { LinearGradient } from 'expo-linear-gradient';
 
-// ARCHITETTURA:
-import { useRequests } from '../hooks/UseRequests';      // 1. LOGICA
-import { RequestCard } from '../components/RequestCard'; // 2. ESTETICA
+import { useRequests } from '../hooks/UseRequests';
+import { RequestCard } from '../components/RequestCard';
 import { Request } from '../../domain/entities/Request';
 import { RequestStatus, RequestType } from '../../domain/entities/RequestsType';
 
 export default function RequestsScreen() {
   
-  // ESTRAIAMO LA LOGICA DALL'HOOK
   const { requests, loading, isAdmin, refresh, approveRequest, rejectRequest } = useRequests();
+  // 3. Hook per ottenere l'altezza della status bar (tacca)
+  const insets = useSafeAreaInsets();
 
   // --- HELPERS DI FORMATTAZIONE ---
-  // Trasforma "2025-09-03T..." in "3 settembre"
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
   };
 
-  // Calcola "3 ore" per gli straordinari
   const getDuration = (start: string, end: string) => {
     if (!start || !end) return undefined;
     const diff = new Date(end).getTime() - new Date(start).getTime();
@@ -31,8 +32,6 @@ export default function RequestsScreen() {
 
   // --- RENDERIZZAZIONE DELLA LISTA ---
   const renderItem = ({ item }: { item: Request }) => {
-    
-    // Calcoliamo la durata solo se serve
     const duration = item.type === RequestType.OVERTIME 
       ? getDuration(item.startDate, item.endDate) 
       : undefined;
@@ -43,25 +42,33 @@ export default function RequestsScreen() {
         status={item.status}
         dateString={formatDate(item.startDate)}
         durationString={duration}
-        // --- NUOVI PARAMETRI ---
         isAdmin={isAdmin}
-        onApprove={() => approveRequest(item.id)} // Passiamo la funzione "bindata" all'ID
+        requesterName={item.requesterName}
+        onApprove={() => approveRequest(item.id)}
         onReject={() => rejectRequest(item.id)}
       />
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>
-          {isAdmin ? "Dashboard Richieste" : "Le mie Richieste"}
-        </Text>
-        <TouchableOpacity onPress={refresh}>
-          <Text style={{ color: '#007AFF' }}>Aggiorna</Text>
-        </TouchableOpacity>
-      </View>
+    // 4. Usiamo una View normale come contenitore (non SafeAreaView)
+    <View style={styles.container}>
+      
+      {/* 5. HEADER CON GRADIENTE */}
+      <LinearGradient
+        // Colori: Azzurrino chiaro che sfuma verso il bianco
+        colors={['#F49717', '#FFFFFF']}
+        style={[styles.gradientHeader, { paddingTop: insets.top }]} // Padding dinamico per la status bar
+      >
+        <View style={styles.headerContainer}>
+          <Text style={styles.headerTitle}>
+            {isAdmin ? "Le mie Richieste" : "Le mie Richieste"}
+          </Text>
+          <TouchableOpacity onPress={refresh}>
+            <Text style={{ color: '#007AFF', fontWeight: '600' }}>Aggiorna</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
 
       {/* CONTENUTO */}
       {loading ? (
@@ -74,24 +81,34 @@ export default function RequestsScreen() {
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listContent}
-          // Messaggio se la lista è vuota
           ListEmptyComponent={
             <Text style={styles.emptyText}>Nessuna richiesta trovata.</Text>
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // Sfondo bianco pulito
+    backgroundColor: '#FFFFFF', 
+  },
+  // --- STILI AGGIORNATI PER HEADER ---
+  gradientHeader: {
+    flex:0.5,
+    paddingBottom: 15,          // Spazio sotto il titolo
+    borderBottomLeftRadius: 20, // (Opzionale) Arrotonda il fondo del gradiente
+    borderBottomRightRadius: 20,
+    elevation: 4,               // Leggera ombra su Android
+    shadowColor: '#000',        // Ombra su iOS
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 2 },
   },
   headerContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingTop: 40,             // Un po' di aria sopra il titolo (sotto la status bar)
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -99,10 +116,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#000', // Nero pieno per contrasto
   },
+  // -----------------------------------
   listContent: {
     paddingHorizontal: 20,
+    paddingTop: 20, // Spazio tra il gradiente e la prima card
     paddingBottom: 40,
   },
   center: {
@@ -116,24 +135,4 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 16,
   },
-  // Stili per i bottoni Admin
-  adminActionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 20, // Spazio extra sotto le azioni
-    marginTop: -8,    // Tiriamo su per avvicinarlo alla card
-    gap: 10,
-  },
-  actionBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-  },
-  approveBtn: { backgroundColor: '#4CD964' },
-  rejectBtn: { backgroundColor: '#FF3B30' },
-  actionText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 13
-  }
 });

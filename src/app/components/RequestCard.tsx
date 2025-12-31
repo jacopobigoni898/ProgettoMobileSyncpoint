@@ -11,6 +11,7 @@ interface RequestCardProps {
   isAdmin?: boolean;             // Opzionale, default false
   onApprove?: () => void;        // Funzione da eseguire all'approvazione
   onReject?: () => void;         // Funzione da eseguire al rifiuto
+  requesterName?: string;        // Nome della persona che ha inviato la richiesta
 }
 
 export const RequestCard = ({ 
@@ -20,7 +21,8 @@ export const RequestCard = ({
   durationString, 
   isAdmin = false, // Valore di default
   onApprove, 
-  onReject 
+  onReject, 
+  requesterName,
 }: RequestCardProps) => {
 
   // ... (Tieni le funzioni getTypeColor e getBadgeStyle come prima) ...
@@ -64,6 +66,9 @@ export const RequestCard = ({
             <Text style={styles.subtitle}>
               {dateString}{durationString ? `, ${durationString}` : ''}
             </Text>
+            {requesterName ? (
+              <Text style={styles.requester}>{requesterName}</Text>
+            ) : null}
           </View>
         </View>
 
@@ -143,6 +148,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
   },
+  requester: {
+    fontSize: 13,
+    color: '#333',
+    marginTop: 4,
+  },
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -169,7 +179,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
   },
-  approveBtn: { backgroundColor: '#34C759' }, // Un verde più "iOS"
+  approveBtn: { backgroundColor: '#168400' }, // Un verde più "iOS"
   rejectBtn: { backgroundColor: '#FF3B30' },
   actionText: {
     color: 'white',

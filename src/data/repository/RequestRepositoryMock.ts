@@ -20,22 +20,36 @@ const MOCK_STRAORDINARI: RichiestaStraordinariDTO[] = [
 
 export class RequestRepositoryMock implements IRequestRepository {
   async getRequests(userId?: string): Promise<Request[]> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Mappiamo le 3 fonti diverse
-        const ferie = MOCK_FERIE.map(d => RequestMapper.fromFerieDto(d));
-        const malattie = MOCK_MALATTIE.map(d => RequestMapper.fromMalattiaDto(d));
-        const straordinari = MOCK_STRAORDINARI.map(d => RequestMapper.fromStraordinariDto(d));
+    // Invece di usare una mappa inline, risolviamo i nomi tramite UserRepositoryMock
+    const { UserRepositoryMock } = await import('./UserRepositoryMock');
+    const userRepo = new UserRepositoryMock();
 
-        // Uniamo tutto
-        let all = [...ferie, ...malattie, ...straordinari];
+    // Mappiamo le 3 fonti diverse
+    const ferie = MOCK_FERIE.map(d => RequestMapper.fromFerieDto(d));
+    const malattie = MOCK_MALATTIE.map(d => RequestMapper.fromMalattiaDto(d));
+    const straordinari = MOCK_STRAORDINARI.map(d => RequestMapper.fromStraordinariDto(d));
 
-        if (userId) {
-          all = all.filter(r => r.userId === userId);
-        }
-        resolve(all);
-      }, 500);
-    });
+    // Uniamo tutto
+    let all = [...ferie, ...malattie, ...straordinari];
+
+    // Se è richiesto un userId, filtriamo prima per ridurre le chiamate
+    if (userId) {
+      all = all.filter(r => r.userId === userId);
+    }
+
+    // Troviamo gli id distinti e risolviamo i nomi in parallelo
+    const uniqueIds = Array.from(new Set(all.map(r => r.userId)));
+    const users = await Promise.all(uniqueIds.map(id => userRepo.getUserById(id)));
+    const userMap = Object.fromEntries(users.filter(Boolean).map(u => [u!.id, u!]));
+
+    // Aggiungiamo requesterName a ogni richiesta quando possibile
+    all = all.map(r => ({
+      ...r,
+      requesterName: userMap[r.userId] ? `${userMap[r.userId].name} ${userMap[r.userId].surname}` : undefined
+    }));
+
+    // Simula latenza come prima
+    return new Promise((resolve) => setTimeout(() => resolve(all), 400));
   }
 
   async addRequest(request: Request): Promise<void> { console.log("Add", request); }
