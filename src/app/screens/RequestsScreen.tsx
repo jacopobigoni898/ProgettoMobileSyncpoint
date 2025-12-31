@@ -38,33 +38,16 @@ export default function RequestsScreen() {
       : undefined;
 
     return (
-      <View>
-        {/* LA CARD VISIVA */}
-        <RequestCard
-          type={item.type}
-          status={item.status}
-          dateString={formatDate(item.startDate)}
-          durationString={duration}/>
-
-        {/* AZIONI ADMIN (Appaiono SOTTO la card solo se necessario) */}
-        {isAdmin && item.status === RequestStatus.PENDING && (
-          <View style={styles.adminActionContainer}>
-            <TouchableOpacity 
-              style={[styles.actionBtn, styles.rejectBtn]} 
-              onPress={() => rejectRequest(item.id)}
-            >
-              <Text style={styles.actionText}>Rifiuta</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.actionBtn, styles.approveBtn]} 
-              onPress={() => approveRequest(item.id)}
-            >
-              <Text style={styles.actionText}>Approva</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      <RequestCard
+        type={item.type}
+        status={item.status}
+        dateString={formatDate(item.startDate)}
+        durationString={duration}
+        // --- NUOVI PARAMETRI ---
+        isAdmin={isAdmin}
+        onApprove={() => approveRequest(item.id)} // Passiamo la funzione "bindata" all'ID
+        onReject={() => rejectRequest(item.id)}
+      />
     );
   };
 

@@ -1,35 +1,46 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'; // Aggiungi TouchableOpacity
 import { RequestStatus, RequestType } from '../../domain/entities/RequestsType';
 
 interface RequestCardProps {
-  type: RequestType;         // Per decidere titolo e colore cerchio
-  status: RequestStatus;     // Per decidere colore e testo badge
-  dateString: string;        // Es. "3 settembre"
-  durationString?: string;   // Es. "3 ore" (opzionale, solo per straordinari)
+  type: RequestType;
+  status: RequestStatus;
+  dateString: string;
+  durationString?: string;
+  // --- NUOVE PROPS ---
+  isAdmin?: boolean;             // Opzionale, default false
+  onApprove?: () => void;        // Funzione da eseguire all'approvazione
+  onReject?: () => void;         // Funzione da eseguire al rifiuto
 }
 
-export const RequestCard = ({ type, status, dateString, durationString }: RequestCardProps) => {
+export const RequestCard = ({ 
+  type, 
+  status, 
+  dateString, 
+  durationString, 
+  isAdmin = false, // Valore di default
+  onApprove, 
+  onReject 
+}: RequestCardProps) => {
 
-  // 1. Logica Colori: Mappiamo i tipi ai colori (come nell'immagine)
+  // ... (Tieni le funzioni getTypeColor e getBadgeStyle come prima) ...
   const getTypeColor = (t: RequestType) => {
     switch (t) {
-      case RequestType.OVERTIME: return '#EA00FF';   // MAGENTA (come foto)
-      case RequestType.HOLIDAY: return '#F4FF21';    // Giallo
-      case RequestType.SICK_LEAVE: return '#FF3B30'; // Rosso
-      default: return '#8E8E93';                     // Grigio
+      case RequestType.OVERTIME: return '#EA00FF';
+      case RequestType.HOLIDAY: return '#F4FF21';
+      case RequestType.SICK_LEAVE: return '#FF3B30';
+      default: return '#8E8E93';
     }
   };
 
-  // 2. Logica Badge: Colore sfondo e testo in base allo stato
   const getBadgeStyle = (s: RequestStatus) => {
     switch (s) {
       case RequestStatus.PENDING: 
-        return { bg: '#F59F28', text: 'In attesa', textColor: '#000' }; // ARANCIO (come foto)
+        return { bg: '#F59F28', text: 'In attesa', textColor: '#000' };
       case RequestStatus.APPROVED: 
-        return { bg: '#168400', text: 'Approvato', textColor: '#FFF' }; // Verde
+        return { bg: '#168400', text: 'Approvato', textColor: '#FFF' };
       case RequestStatus.REJECTED: 
-        return { bg: '#FF0000', text: 'Rifiutato', textColor: '#FFF' }; // Rosso
+        return { bg: '#FF0000', text: 'Rifiutato', textColor: '#FFF' };
       default: 
         return { bg: '#CCC', text: s, textColor: '#000' };
     }
@@ -37,33 +48,51 @@ export const RequestCard = ({ type, status, dateString, durationString }: Reques
 
   const badgeInfo = getBadgeStyle(status);
   const typeColor = getTypeColor(type);
-
-  // Formattiamo il titolo (Prima lettera maiuscola)
   const title = type.charAt(0).toUpperCase() + type.slice(1);
 
   return (
+    // CAMBIAMENTO 1: Il contenitore principale ora contiene tutto verticalmente
     <View style={styles.cardContainer}>
       
-      {/* SEZIONE SINISTRA: Icona e Testi */}
-      <View style={styles.leftSection}>
-        {/* Il Cerchio Colorato */}
-        <View style={[styles.circleIcon, { backgroundColor: typeColor }]} />
-        
-        {/* Testi */}
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>
-            {dateString}{durationString ? `, ${durationString}` : ''}
+      {/* CAMBIAMENTO 2: Avvolgiamo il contenuto originale in una 'row' per mantenerlo orizzontale */}
+      <View style={styles.topRow}>
+        {/* SEZIONE SINISTRA */}
+        <View style={styles.leftSection}>
+          <View style={[styles.circleIcon, { backgroundColor: typeColor }]} />
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.subtitle}>
+              {dateString}{durationString ? `, ${durationString}` : ''}
+            </Text>
+          </View>
+        </View>
+
+        {/* SEZIONE DESTRA: Badge */}
+        <View style={[styles.badge, { backgroundColor: badgeInfo.bg }]}>
+          <Text style={[styles.badgeText, { color: badgeInfo.textColor }]}>
+            {badgeInfo.text}
           </Text>
         </View>
       </View>
 
-      {/* SEZIONE DESTRA: Badge Stato */}
-      <View style={[styles.badge, { backgroundColor: badgeInfo.bg }]}>
-        <Text style={[styles.badgeText, { color: badgeInfo.textColor }]}>
-          {badgeInfo.text}
-        </Text>
-      </View>
+      {/* CAMBIAMENTO 3: Sezione Admin inserita qui sotto */}
+      {isAdmin && status === RequestStatus.PENDING && (
+        <View style={styles.adminActionContainer}>
+          <TouchableOpacity 
+            style={[styles.actionBtn, styles.rejectBtn]} 
+            onPress={onReject} // Usiamo la prop
+          >
+            <Text style={styles.actionText}>Rifiuta</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionBtn, styles.approveBtn]} 
+            onPress={onApprove} // Usiamo la prop
+          >
+            <Text style={styles.actionText}>Approva</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
     </View>
   );
@@ -71,30 +100,34 @@ export const RequestCard = ({ type, status, dateString, durationString }: Reques
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#EAEAEA', // Grigio chiaro sfondo
-    borderRadius: 20,           // Angoli molto arrotondati
+    backgroundColor: '#EAEAEA',
+    borderRadius: 20,
     padding: 16,
-    flexDirection: 'row',       // Allinea orizzontalmente SX e DX
-    alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 12,
+    // Rimuoviamo flexDirection: 'row' da qui perché ora è un contenitore verticale
+    // Rimuoviamo alignItems e justifyContent da qui
     
-    // Ombreggiatura leggera (Shadow iOS & Android)
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3, 
   },
+  // Nuova classe per la parte superiore della card
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1, // Occupa tutto lo spazio disponibile verso sinistra
+    flex: 1,
   },
   circleIcon: {
     width: 42,
     height: 42,
-    borderRadius: 21, // Perfettamente rotondo
+    borderRadius: 21,
     marginRight: 12,
   },
   textContainer: {
@@ -108,7 +141,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#555', // Grigio scuro per il testo secondario
+    color: '#555',
   },
   badge: {
     paddingHorizontal: 12,
@@ -120,5 +153,27 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  // --- STILI ADMIN SPOSTATI QUI ---
+  adminActionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 15,    // Spazio tra la riga sopra e i bottoni
+    gap: 10,
+    borderTopWidth: 1, // Opzionale: una linetta per separare
+    borderTopColor: '#D1D1D6',
+    paddingTop: 10,
+  },
+  actionBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  approveBtn: { backgroundColor: '#34C759' }, // Un verde più "iOS"
+  rejectBtn: { backgroundColor: '#FF3B30' },
+  actionText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14
   }
 });
