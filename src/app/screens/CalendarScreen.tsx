@@ -6,12 +6,14 @@ import { SmartCalendar } from '../components/SmartCalendar';
 import { CustomDropdown } from '../components/DropDownMenuButton';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { RequestType } from '../../domain/entities/RequestsType';
+import { UserRole } from '../../domain/entities/User';
+import { AuthStore } from '../../core/AuthStore';
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
 
   // Stato
-  const [selectedType, setSelectedType] = useState<RequestType>(RequestType.HOLIDAY);
+  const [selectedType, setSelectedType] = useState<RequestType | UserRole>(RequestType.HOLIDAY);
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
@@ -25,10 +27,11 @@ export default function CalendarScreen() {
     { label: 'Ferie', value: RequestType.HOLIDAY },
     { label: 'Malattia', value: RequestType.SICK_LEAVE },
     { label: 'Straordinari', value: RequestType.OVERTIME },
+    ...(AuthStore.getLoggedUser()?.role === UserRole.ADMIN ? [{ label: 'Panoramica generale admin', value: UserRole.ADMIN }] : []),
   ];
 
-  const handleTypeSelect = (val: RequestType) => {
-    setSelectedType(val);
+  const handleTypeSelect = (val: RequestType | UserRole) => {
+    setSelectedType(val as any);
     setStartDate(null);
     setEndDate(null);
   };
@@ -49,6 +52,15 @@ export default function CalendarScreen() {
     setEndDate(null);
     setNotes('');
   };
+
+  // Helper: determina se il valore selezionato è un RequestType valido
+  const isRequestType = (v: any): v is RequestType => Object.values(RequestType).includes(v as RequestType);
+
+  // Tipo che passiamo al calendario (se è admin, usiamo il default FERIE)
+  const calendarType: RequestType = isRequestType(selectedType) ? (selectedType as RequestType) : RequestType.HOLIDAY;
+
+  // Abilita il submit solo se è selezionato un RequestType e una data
+  const canSubmit = isRequestType(selectedType) && !!startDate;
 
   return (
     <View style={styles.container}>
@@ -75,7 +87,7 @@ export default function CalendarScreen() {
           {/* Calendario */}
           <View style={styles.calendarWrapper}>
             <SmartCalendar
-              requestType={selectedType}
+              requestType={calendarType}
               startDate={startDate}
               endDate={endDate}
               onRangeSelect={handleRangeSelect}
@@ -86,7 +98,7 @@ export default function CalendarScreen() {
             <PrimaryButton
               title="INVIA RICHIESTA"
               onPress={handleSubmit}
-              disabled={!startDate} // Il bottone è spento se non hai scelto una data!
+              disabled={!canSubmit} // Disabilitato se non è selezionato un RequestType valido o manca la data
             />
           </View>
 

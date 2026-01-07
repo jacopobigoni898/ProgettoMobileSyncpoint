@@ -42,7 +42,6 @@ export default function RequestsScreen() {
 
     // Definiamo per ogni richiesta se è 'inviata' (item.userId === mio id)
     // o 'ricevuta' (se io sono admin e item.userId !== mio id)
-    const isSent = item.userId === currentUser.id;
     const isReceived = isAdmin && item.userId !== currentUser.id;
 
     return (
