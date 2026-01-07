@@ -8,8 +8,8 @@ interface Option {
 }
 
 interface CustomDropdownProps {
-  label: string;             // Es. "Tipo di richiesta"
-  options: Option[];         // La lista (Ferie, Malattia...)
+  label: string;             // Tipon di richieste
+  options: Option[];         // lista di opzioni
   selectedValue: any;        // Il valore attuale
   onValueChange: (val: any) => void; // Funzione quando cambi
 }
@@ -85,10 +85,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#F3F4F6',
-    borderRadius: 12,
+    borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#E5E7EB',
   },
   selectedText: {

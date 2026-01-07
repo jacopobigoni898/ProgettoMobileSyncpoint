@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRequests } from '../hooks/UseRequests';
 import { RequestCard } from '../components/RequestCard';
 import { Request } from '../../domain/entities/Request';
-import { RequestStatus, RequestType } from '../../domain/entities/RequestsType';
+import { RequestType } from '../../domain/entities/RequestsType';
 import { AuthStore } from '../../core/AuthStore';
 
 export default function RequestsScreen() {
@@ -146,9 +146,6 @@ const styles = StyleSheet.create({
     minHeight: 120,
     borderBottomLeftRadius: 20, // (Opzionale) Arrotonda il fondo del gradiente
     borderBottomRightRadius: 20,
-    elevation: 4,               // Leggera ombra su Android
-    shadowColor: '#000',        // Ombra su iOS
-    shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 2 },
   },
   headerContainer: {
@@ -159,7 +156,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#000', // Nero pieno per contrasto
   },

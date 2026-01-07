@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, ScrollView, Text, StyleSheet, TextInput, Alert } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SmartCalendar } from '../components/SmartCalendar';
 import { CustomDropdown } from '../components/DropDownMenuButton';
-import { PrimaryButton } from '../components/PrimaryButton'; // <--- IMPORTA IL NUOVO COMPONENTE
+import { PrimaryButton } from '../components/PrimaryButton';
 import { RequestType } from '../../domain/entities/RequestsType';
 
 export default function CalendarScreen() {
@@ -50,37 +51,47 @@ export default function CalendarScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>      
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
-        <Text style={styles.header}>Nuova Richiesta</Text>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#F49717', '#FFFFFF']}
+        style={[styles.gradientHeader, { paddingTop: insets.top }]}
+      >
+        <View style={styles.headerContainer}>
+          <Text style={styles.headerTitle}>Calendario</Text>
+        </View>
+      </LinearGradient>
 
-        {/* Selettore tipo (dropdown esterno) */}
-        <CustomDropdown
-          label="Tipo di richiesta"
-          options={typeOptions}
-          selectedValue={selectedType}
-          onValueChange={handleTypeSelect}
-        />
+      <View style={styles.bodyContainer}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
 
-        {/* Calendario */}
-        <View style={styles.calendarWrapper}>
-          <SmartCalendar
-            requestType={selectedType}
-            startDate={startDate}
-            endDate={endDate}
-            onRangeSelect={handleRangeSelect}
+          {/* Selettore tipo (dropdown esterno) */}
+          <CustomDropdown
+            label="Tipo di richiesta"
+            options={typeOptions}
+            selectedValue={selectedType}
+            onValueChange={handleTypeSelect}
           />
-        </View>
-        <View style={{ marginTop: 20 }}>
-            <PrimaryButton 
-                title="INVIA RICHIESTA" 
-                onPress={handleSubmit} 
-                disabled={!startDate} // Il bottone è spento se non hai scelto una data!
-            />
-        </View>
 
-      </ScrollView>
+          {/* Calendario */}
+          <View style={styles.calendarWrapper}>
+            <SmartCalendar
+              requestType={selectedType}
+              startDate={startDate}
+              endDate={endDate}
+              onRangeSelect={handleRangeSelect}
+            />
+          </View>
+
+          <View style={{ marginTop: 20 }}>
+            <PrimaryButton
+              title="INVIA RICHIESTA"
+              onPress={handleSubmit}
+              disabled={!startDate} // Il bottone è spento se non hai scelto una data!
+            />
+          </View>
+
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -90,27 +101,40 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, paddingBottom: 40 },
   header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, color: '#333' },
   
-  // Selettore tipo — ora usa il componente esterno CustomDropdown
-  typeSelectorContainer: { marginBottom: 20 },
+  // Stili Header con gradiente
+  gradientHeader: {
+    marginBottom: 40,
+    paddingBottom: 18,
+    minHeight: 120,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 40,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#000'
+  },
 
-  // Stili Calendario e Input
-  calendarWrapper: { 
-    borderRadius: 16, 
-    overflow: 'hidden', 
+  bodyContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+  },
+
+  // Stili Calendario
+  calendarWrapper: {
+    borderRadius: 16,
+    overflow: 'hidden',
     marginBottom: 20,
     borderWidth: 1,
     borderColor: '#EEE'
-  },
-  label: { marginBottom: 8, fontWeight: '600', color: '#333' },
-  notesInput: { 
-    minHeight: 100, 
-    backgroundColor: '#FAFAFA', 
-    borderColor: '#E5E7EB', 
-    borderWidth: 1, 
-    borderRadius: 12, 
-    padding: 12, 
-    textAlignVertical: 'top',
-    fontSize: 16
   },
   // Nota: ho rimosso gli stili "button" e "buttonText" perché ora sono nel componente PrimaryButton!
 });
