@@ -14,14 +14,14 @@ interface BaseRequest {
 export interface HolidayRequest extends BaseRequest {
   type: RequestType.HOLIDAY;
   startDate: string;      // DateTime
-  endDate: string;
+  endDate: string;        //DataTime
 }
 
 // Malattia
 export interface SickLeaveRequest extends BaseRequest {
   type: RequestType.SICK_LEAVE;
   startDate: string;      // DateOnly
-  endDate: string;
+  endDate: string;    // DateOnly
   certificateId?: string;
 }
 
