@@ -58,7 +58,7 @@ export const SmartCalendar = ({ requestType, startDate, endDate, onRangeSelect }
 
     // 1. Validazione PRIMO CLICK (Singolo Giorno)
     if (requestType === RequestType.HOLIDAY) {
-      if (dow === 5 || dow === 6) {
+      if (dow === 0 || dow === 6) {
         alert("Non puoi selezionare venerdì o sabato per le ferie!");
         return;
       }
@@ -100,7 +100,7 @@ export const SmartCalendar = ({ requestType, startDate, endDate, onRangeSelect }
         // Controllo B: Ci sono Venerdì o Sabati in mezzo?
         const hasWeekend = rangeDates.some(d => {
           const wDow = getSafeDayOfWeek(d);
-          return wDow === 5 || wDow === 6;
+          return wDow === 0 || wDow === 6;
         });
 
         if (hasWeekend) {
@@ -144,11 +144,10 @@ export const SmartCalendar = ({ requestType, startDate, endDate, onRangeSelect }
       
       while (d.getFullYear() === year) {
         const dow = d.getDay();
-        if (dow === 5 || dow === 6) {
+        if (dow === 0 || dow === 6) {
           const str = d.toISOString().split('T')[0];
           if (!marks[str]) {
             marks[str] = {
-              disabled: true, disableTouchEvent: true,
               color: colors.blockedBg, textColor: colors.blockedText,
               startingDay: true, endingDay: true
             };
