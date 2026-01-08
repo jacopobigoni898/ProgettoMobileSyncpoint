@@ -123,12 +123,12 @@ export const SmartCalendar = ({ requestType, startDate, endDate, onRangeSelect }
       main: '#F59F28',
       selectionText: 'white',
       rangeBg: '#FFE0B2',
-      blockedBg: '#FFEBEE',
-      blockedText: '#D32F2F',
+      blockedBg: '#FF0000',
+      blockedText: '#ffffffff',
       disabledText: '#BDBDBD'
     };
 
-    if (requestType === RequestType.HOLIDAY) {
+    if (requestType === RequestType.HOLIDAY || requestType === RequestType.SICK_LEAVE) {
       // Festivi Specifici
       HOLIDAYS.forEach(h => {
         marks[h] = {

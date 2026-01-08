@@ -1,13 +1,13 @@
 import { RequestStatus, RequestType } from './RequestsType';
 
 // Base comune per l'app
-interface BaseRequest {
+ export interface BaseRequest {
   id: string;             // Normalizzato (sarà sempre stringa)
   userId: string;
   // Nome della persona che ha creato la richiesta (opzionale nei casi di dati mock o backend che non lo fornisce)
   requesterName?: string;
   status: RequestStatus;
-  note?: string;          // Swagger non ha note/motivazione, quindi sarà spesso vuoto
+  //note?: string;          // Swagger non ha note/motivazione, quindi sarà spesso vuoto
 }
 
 // Ferie

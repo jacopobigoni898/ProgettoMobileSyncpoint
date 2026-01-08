@@ -8,7 +8,7 @@ interface Option {
 }
 
 interface CustomDropdownProps {
-  label: string;             // Tipon di richieste
+  label: string;             // Tipo di richieste
   options: Option[];         // lista di opzioni
   selectedValue: any;        // Il valore attuale
   onValueChange: (val: any) => void; // Funzione quando cambi
@@ -39,7 +39,7 @@ export const CustomDropdown = ({ label, options, selectedValue, onValueChange }:
       <Modal visible={visible} transparent animationType="fade">
         <TouchableOpacity style={styles.modalOverlay} onPress={() => setVisible(false)}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Seleziona {label}</Text>
+            <Text style={styles.modalTitle}>{label}</Text>
             <FlatList
               data={options}
               keyExtractor={(item) => item.value.toString()}
@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
+    marginLeft: 6,
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
@@ -110,6 +111,7 @@ const styles = StyleSheet.create({
     maxHeight: '50%', // Non occupa tutto lo schermo
   },
   modalTitle: {
+    padding:5,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
@@ -121,15 +123,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 15,
-    borderBottomWidth: 1,
+    paddingHorizontal:20,
     borderBottomColor: '#F3F4F6',
   },
   optionSelected: {
-    backgroundColor: '#FFF8E1', // Sfondo leggero se selezionato
-    marginHorizontal: -20,      // Estende lo sfondo ai bordi
+    backgroundColor: '#FFF8E1', // Sfondo leggero se selezionato      // Estende lo sfondo ai bordi
     paddingHorizontal: 20,
+    borderRadius: 20,
   },
   optionText: {
+    padding: 5,
     fontSize: 16,
     color: '#333',
   },

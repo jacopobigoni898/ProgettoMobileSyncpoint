@@ -6,59 +6,76 @@ import { SmartCalendar } from '../components/SmartCalendar';
 import { CustomDropdown } from '../components/DropDownMenuButton';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { RequestType } from '../../domain/entities/RequestsType';
+import { BaseRequest } from '../../domain/entities/Request';
 import { UserRole } from '../../domain/entities/User';
 import { AuthStore } from '../../core/AuthStore';
 
-export default function CalendarScreen() {
+export default function CalendarScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
 
   // Stato
+  // Di default impostiamo RequestType.HOLIDAY che useremo come "Assenze Generiche"
   const [selectedType, setSelectedType] = useState<RequestType | UserRole>(RequestType.HOLIDAY);
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
-  const [notes, setNotes] = useState('');
-  // Gestisce gli eventi prendendo data di inizio e di fine selezionate dal utente
+
+  // Gestione selezione date
   const handleRangeSelect = (start: string, end: string | null) => {
     setStartDate(start);
     setEndDate(end);
   };
-  //costante che salva le opzioni disponibili nel dropdown
+
+  // --- MODIFICA QUI: LE OPZIONI DEL FILTRO ---
   const typeOptions = [
-    { label: 'Ferie', value: RequestType.HOLIDAY },
-    { label: 'Malattia', value: RequestType.SICK_LEAVE },
+    // Raggruppiamo Ferie e Malattia sotto "Assenze". 
+    // Usiamo RequestType.HOLIDAY come valore 'tecnico' per avere i weekend bloccati in rosso.
+    { label: 'Assenze', value: RequestType.HOLIDAY },
+    
+    // Gli straordinari rimangono separati perché hanno logiche diverse
     { label: 'Straordinari', value: RequestType.OVERTIME },
-    ...(AuthStore.getLoggedUser()?.role === UserRole.ADMIN ? [{ label: 'Panoramica generale admin', value: UserRole.ADMIN }] : []),
+
+    // Opzione Admin (visibile solo se admin)
+    ...(AuthStore.getLoggedUser()?.role === UserRole.ADMIN 
+        ? [{ label: 'Panoramica Team (Admin)', value: UserRole.ADMIN }] 
+        : []),
   ];
-  // Gestisce la selezione del tipo di richiesta dal dropdown
-  const handleTypeSelect = (val: RequestType | UserRole) => {
-    setSelectedType(val as any);
+
+  const handleTypeSelect = (val: any) => {
+    setSelectedType(val);
+    // Reset date quando cambio tipo
     setStartDate(null);
     setEndDate(null);
   };
 
-  const handleSubmit = () => {
-    // Validazione base
+  const handleProceedToRequest = () => {
     if (!startDate) {
-      Alert.alert('Attenzione', 'Seleziona almeno una data per la richiesta.');
+      Alert.alert('Attenzione', 'Seleziona le date sul calendario prima di procedere.');
       return;
     }
 
-    console.log('Nuova richiesta:', { selectedType, startDate, endDate, notes });
-    Alert.alert('Richiesta creata', `Richiesta di ${selectedType} inviata con successo!`);
-
-    // Reset
-    setSelectedType(RequestType.HOLIDAY);
+    // Navighiamo alla schermata del modulo.
+    // NOTA: Passiamo le date, ma NON forziamo il tipo se è "Assenze".
+    // Lasciamo che l'utente scelga "Ferie" o "Malattia" nel form successivo.
+    navigation.navigate('AddRequest', {
+      preselectedStartDate: startDate,
+      preselectedEndDate: endDate,
+      // Se è Straordinario lo pre-selezioniamo, altrimenti (Assenze) lasciamo default (Ferie)
+      preselectedType: selectedType === RequestType.OVERTIME ? 'Straordinari' : 'Ferie'
+    });
+    
+    // Reset opzionale
     setStartDate(null);
     setEndDate(null);
   };
 
-  // Helper: determina se il valore selezionato è un RequestType valido
+  // Logica per dire al calendario cosa mostrare
+  // Se l'utente seleziona "Assenze" (value=HOLIDAY), il calendario mostrerà i weekend rossi.
   const isRequestType = (v: any): v is RequestType => Object.values(RequestType).includes(v as RequestType);
+  const calendarVisualType: RequestType = isRequestType(selectedType) 
+    ? (selectedType as RequestType) 
+    : RequestType.HOLIDAY;
 
-  // Tipo che passiamo al calendario (se è admin, usiamo il default FERIE)
-  const calendarType: RequestType = isRequestType(selectedType) ? (selectedType as RequestType) : RequestType.HOLIDAY;
-
-  // Abilita il submit solo se è selezionato un RequestType e una data
+  // Il bottone si abilita solo se ho date selezionate e non sono in modalità "Admin View" pura
   const canSubmit = isRequestType(selectedType) && !!startDate;
 
   return (
@@ -73,35 +90,31 @@ export default function CalendarScreen() {
       </LinearGradient>
 
       <View style={styles.bodyContainer}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
 
-          {/* Selettore tipo (dropdown esterno) */}
+          {/* Dropdown con la nuova voce "Assenze" */}
           <CustomDropdown
-            label="Tipo di richiesta"
+            label="Scegli il calendario da visualizzare"
             options={typeOptions}
             selectedValue={selectedType}
             onValueChange={handleTypeSelect}
           />
 
-          {/* Calendario */}
           <View style={styles.calendarWrapper}>
             <SmartCalendar
-              requestType={calendarType}
+              requestType={calendarVisualType}
               startDate={startDate}
               endDate={endDate}
               onRangeSelect={handleRangeSelect}
             />
           </View>
-
+          
           <View style={{ marginTop: 20 }}>
             <PrimaryButton
-              title="INVIA RICHIESTA"
-              onPress={handleSubmit}
-              disabled={!canSubmit} // Disabilitato se non è selezionato un RequestType valido o manca la data
+              title="Procedi con la richiesta" 
+              onPress={handleProceedToRequest}
+              disabled={!canSubmit} 
             />
           </View>
-
-        </ScrollView>
       </View>
     </View>
   );

@@ -7,24 +7,24 @@ export class RequestMapper {
   // --- FERIE ---
   static fromFerieDto(dto: RichiestaFerieDTO): HolidayRequest {
     return {
-      id: dto.idRichiesta.toString(), // Prendo idRichiesta
-      userId: dto.idUtente.toString(),
+      id: dto.id_richiesta.toString(), // Prendo id_richiesta
+      userId: dto.id_utente.toString(),
       type: RequestType.HOLIDAY,
-      status: mapStatus(dto.statoApprovazione),
-      startDate: dto.dataInizio,
-      endDate: dto.dataFine || dto.dataInizio, // Fallback se null
+      status: mapStatus(dto.stato_approvazione),
+      startDate: dto.data_inizio,
+      endDate: dto.data_fine || dto.data_inizio, // Fallback se null
     };
   }
 
   // --- MALATTIA ---
   static fromMalattiaDto(dto: RichiestaMalattiaDTO): SickLeaveRequest {
     return {
-      id: dto.idmalattia.toString(), // Prendo idmalattia
-      userId: dto.idutente.toString(), // Nota: idutente minuscolo nello Swagger
+      id: dto.id_malattia.toString(), // Prendo id_malattia
+      userId: dto.id_utente.toString(), // Nota: id_utente dallo Swagger
       type: RequestType.SICK_LEAVE,
-      status: mapStatus(dto.statoApprovazione),
-      startDate: dto.dataInizio,
-      endDate: dto.dataFine || dto.dataInizio,
+      status: mapStatus(dto.stato_approvazione),
+      startDate: dto.data_inizio,
+      endDate: dto.data_fine || dto.data_inizio,
       certificateId: dto.certificato
     };
   }

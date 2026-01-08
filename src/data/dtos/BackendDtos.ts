@@ -1,22 +1,22 @@
 // src/data/dtos/BackendDtos.ts
 
-// 1. FERIE (da Swagger: RichiestaFerieDTO)
+// Esempio per Richiesta_Ferie
 export interface RichiestaFerieDTO {
-  idRichiesta: number;       //
-  idUtente: number;
-  dataInizio: string;        // format: date-time
-  dataFine?: string;         // nullable in swagger
-  statoApprovazione?: string;
+  id_richiesta: number;
+  id_utente: number;
+  data_inizio: string; // I DB mandano date come stringhe ISO
+  data_fine: string;
+  stato_approvazione: string; // 'non validato', 'validato', etc.
 }
 
-// 2. MALATTIA (da Swagger: RichiestaMalattiaDTO)
+// Esempio per Richiesta_Malattia
 export interface RichiestaMalattiaDTO {
-  idmalattia: number;        // Nota il nome diverso!
-  idutente: number;          // Nota: idutente tutto minuscolo qui
-  dataInizio: string;        // format: date (es. "2023-10-25")
-  dataFine?: string;
-  statoApprovazione?: string;
-  certificato?: string;
+  id_malattia: number;
+  id_utente: number;
+  data_inizio: string;
+  data_fine: string;
+  stato_approvazione: string;
+  certificato: string; // Nome del file
 }
 
 // 3. STRAORDINARI (da Swagger: RichiestaStraordinariDTO)
