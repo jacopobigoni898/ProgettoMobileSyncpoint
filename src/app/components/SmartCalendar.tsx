@@ -12,7 +12,7 @@ LocaleConfig.locales['it'] = {
 };
 LocaleConfig.defaultLocale = 'it';
 
-// MOCK DEI FESTIVI
+// giorni festivi fissi (formato YYYY-MM-DD)
 const HOLIDAYS = [
   '2025-01-01', // Capodanno
   '2025-01-06', // Epifania (Aggiunta per testare Gennaio)

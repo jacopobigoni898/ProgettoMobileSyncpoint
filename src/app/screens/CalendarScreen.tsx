@@ -17,19 +17,19 @@ export default function CalendarScreen() {
   const [startDate, setStartDate] = useState<string | null>(null);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
-
+  // Gestisce gli eventi prendendo data di inizio e di fine selezionate dal utente
   const handleRangeSelect = (start: string, end: string | null) => {
     setStartDate(start);
     setEndDate(end);
   };
-
+  //costante che salva le opzioni disponibili nel dropdown
   const typeOptions = [
     { label: 'Ferie', value: RequestType.HOLIDAY },
     { label: 'Malattia', value: RequestType.SICK_LEAVE },
     { label: 'Straordinari', value: RequestType.OVERTIME },
     ...(AuthStore.getLoggedUser()?.role === UserRole.ADMIN ? [{ label: 'Panoramica generale admin', value: UserRole.ADMIN }] : []),
   ];
-
+  // Gestisce la selezione del tipo di richiesta dal dropdown
   const handleTypeSelect = (val: RequestType | UserRole) => {
     setSelectedType(val as any);
     setStartDate(null);
@@ -50,7 +50,6 @@ export default function CalendarScreen() {
     setSelectedType(RequestType.HOLIDAY);
     setStartDate(null);
     setEndDate(null);
-    setNotes('');
   };
 
   // Helper: determina se il valore selezionato è un RequestType valido
