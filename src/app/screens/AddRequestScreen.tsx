@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { CustomDropdown } from '../components/DropDownMenuButton';
-import { PrimaryButton } from '../components/PrimaryButton';
+import { PrimaryButton } from '../components/PrimaryButton'; // <--- Importiamo il tuo bottone
 
 export default function AddRequestScreen({ route, navigation }: any) {
   
@@ -12,14 +14,12 @@ export default function AddRequestScreen({ route, navigation }: any) {
   const [type, setType] = useState<any>(preselectedType || 'Ferie');
   const [startDate, setStartDate] = useState<string>(preselectedStartDate || '');
   const [endDate, setEndDate] = useState<string>(preselectedEndDate || '');
-  const [reason, setReason] = useState<string>(''); // Motivazione / Note
+  const [certificate, setCertificate] = useState<any>(null);
 
-  // 3. LISTA TIPI DI ASSENZA (Aggiornata con i tuoi permessi)
   const requestOptions = [
     { label: 'Ferie', value: 'Ferie' },
     { label: 'Malattia', value: 'Malattia' },
     { label: 'Straordinari', value: 'Straordinari' },
-    // Permessi specifici
     { label: 'Permesso Studio', value: 'Permesso Studio'},
     { label: 'Permesso Lutto', value: 'Permesso Lutto'},
     { label: 'Permesso L.104', value: 'Permesso L.104'},
@@ -28,32 +28,52 @@ export default function AddRequestScreen({ route, navigation }: any) {
     { label: 'Congedo Matrimonio', value: 'Congedo Matrimonio'},
   ];
 
-  // 4. AGGIORNAMENTO DATI (Se l'utente torna indietro e cambia selezione)
   useEffect(() => {
     if (preselectedStartDate) setStartDate(preselectedStartDate);
     if (preselectedEndDate) setEndDate(preselectedEndDate);
     if (preselectedType) setType(preselectedType);
   }, [preselectedStartDate, preselectedEndDate, preselectedType]);
 
-  // 5. INVIO
+  // Funzione selezione PDF
+  const pickCertificate = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/pdf',
+        copyToCacheDirectory: true
+      });
+
+      if (result.assets && result.assets.length > 0) {
+        setCertificate(result.assets[0]);
+      }
+    } catch (err) {
+      console.log("Selezione annullata", err);
+    }
+  };
+
   const handleSubmit = () => {
+    // Validazioni
     if (!startDate) {
         Alert.alert("Attenzione", "La data di inizio è obbligatoria.");
         return;
     }
+    if (type === 'Malattia' && !certificate) {
+        Alert.alert("Certificato mancante", "Per la malattia è obbligatorio caricare il PDF.");
+        return;
+    }
 
-    // Qui in futuro faremo lo switch per mappare sul DB:
-    // Se è 'Ferie' -> Tabella Richiesta_Ferie
-    // Se è 'Malattia' -> Tabella Richiesta_Malattia
-    // Se è 'Permesso...' -> Tabella Richiesta_Permessi
-    
-    console.log("Invio richiesta:", { type, startDate, endDate, reason });
-    
-    Alert.alert(
-        "Richiesta Inviata", 
-        `La tua richiesta di "${type}" è stata inoltrata correttamente.`,
-        [{ text: "OK", onPress: () => navigation.goBack() }]
-    );
+   let dataFinaleEffettiva = endDate; // Copia il valore
+
+    if (!dataFinaleEffettiva) {
+    dataFinaleEffettiva = startDate; // Se era vuoto, mettici la data inizio
+    }
+    const payload = { 
+        type, 
+        startDate, 
+        endDate: dataFinaleEffettiva,
+        certificate: certificate ? certificate.name : null 
+    };
+    console.log("Dati da inviare:", payload);
+
   };
 
   return (
@@ -62,21 +82,24 @@ export default function AddRequestScreen({ route, navigation }: any) {
         
         <Text style={styles.headerTitle}>Dettagli Richiesta</Text>
         <Text style={styles.subTitle}>
-           Stai richiedendo un'assenza dal {startDate} {endDate ? `al ${endDate}` : ''}.
+           Compila i dettagli per la richiesta di assenza.
         </Text>
 
-        {/* 1. SELEZIONE TIPO */}
+        {/* TIPOLOGIA */}
         <Text style={styles.label}>Tipologia</Text>
         <View style={{ zIndex: 100, marginBottom: 15 }}> 
           <CustomDropdown 
-            label="" // Lasciamo vuoto o mettiamo un titolo se vuoi
+            label="" 
             options={requestOptions}
             selectedValue={type}
-            onValueChange={(val) => setType(val)}
+            onValueChange={(val) => {
+                setType(val);
+                if (val !== 'Malattia') setCertificate(null);
+            }}
           />
         </View>
 
-        {/* 2. DATE (Visualizzazione) */}
+        {/* DATE */}
         <View style={styles.row}>
             <View style={{ flex: 1, marginRight: 10 }}>
                 <Text style={styles.label}>Data Inizio</Text>
@@ -96,18 +119,25 @@ export default function AddRequestScreen({ route, navigation }: any) {
             </View>
         </View>
 
-        {/* 3. MOTIVAZIONE / NOTE */}
-        <Text style={styles.label}>Note o Motivazione</Text>
-        <TextInput 
-          style={[styles.input, styles.textArea]} 
-          placeholder="Inserisci dettagli aggiuntivi..."
-          multiline
-          numberOfLines={4}
-          value={reason}
-          onChangeText={setReason}
-        />
+        {/* UPLOAD (Solo per Malattia) */}
+        {type === 'Malattia' && (
+            <View style={styles.uploadSection}>
+                <Text style={styles.label}>Certificato Medico (PDF) *</Text>
+                <TouchableOpacity style={styles.uploadBtn} onPress={pickCertificate}>
+                    <Ionicons 
+                        name={certificate ? "document-text" : "cloud-upload-outline"} 
+                        size={24} 
+                        color={certificate ? "#F59F28" : "#666"} 
+                    />
+                    <Text style={[styles.uploadText, certificate && styles.uploadTextSelected]}>
+                        {certificate ? certificate.name : "Tocca per caricare PDF"}
+                    </Text>
+                    {certificate && <Ionicons name="checkmark-circle" size={20} color="green" style={{marginLeft:'auto'}}/>}
+                </TouchableOpacity>
+            </View>
+        )}
 
-        {/* 4. BOTTONE */}
+        {/* 4. BOTTONE "PRIMARY" */}
         <View style={styles.footer}>
           <PrimaryButton 
             title="CONFERMA RICHIESTA" 
@@ -156,17 +186,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
     color: '#333',
   },
-  inputDisabled: { // Stile diverso per i campi non modificabili
+  inputDisabled: { 
     borderWidth: 1,
     borderColor: '#E0E0E0',
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    backgroundColor: '#F0F0F0', // Grigio leggero
+    backgroundColor: '#F0F0F0',
     color: '#888',
   },
   textArea: {
-    minHeight: 120,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
   row: {
@@ -176,6 +206,29 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 40,
-    marginBottom: 20,
+    marginBottom: 30,
   },
+  uploadSection: {
+    marginTop: 15,
+  },
+  uploadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F59F28',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: '#FFF8E1',
+  },
+  uploadText: {
+    marginLeft: 10,
+    fontSize: 15,
+    color: '#666',
+    flex: 1,
+  },
+  uploadTextSelected: {
+    color: '#333',
+    fontWeight: '600',
+  }
 });

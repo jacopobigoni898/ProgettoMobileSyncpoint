@@ -17,5 +17,5 @@ export enum RequestType {
 export enum RequestStatus {
   PENDING = 'non validato',   // Appena creata, l'admin deve vederla 
   APPROVED = 'validato',  // Confermata, appare in calendario 
-  REJECTED = 'annulato',  // Bocciata dall'admin
+  REJECTED = 'annullato',  // Bocciata dall'admin
 }

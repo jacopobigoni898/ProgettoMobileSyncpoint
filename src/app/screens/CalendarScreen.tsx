@@ -52,13 +52,18 @@ export default function CalendarScreen({ navigation }: any) {
       Alert.alert('Attenzione', 'Seleziona le date sul calendario prima di procedere.');
       return;
     }
+    let dataFInaleEffettiva = endDate;
+    if (!dataFInaleEffettiva){
+      dataFInaleEffettiva =startDate;
+    }
+
 
     // Navighiamo alla schermata del modulo.
     // NOTA: Passiamo le date, ma NON forziamo il tipo se è "Assenze".
     // Lasciamo che l'utente scelga "Ferie" o "Malattia" nel form successivo.
     navigation.navigate('AddRequest', {
       preselectedStartDate: startDate,
-      preselectedEndDate: endDate,
+      preselectedEndDate: dataFInaleEffettiva,
       // Se è Straordinario lo pre-selezioniamo, altrimenti (Assenze) lasciamo default (Ferie)
       preselectedType: selectedType === RequestType.OVERTIME ? 'Straordinari' : 'Ferie'
     });
